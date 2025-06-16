@@ -1,0 +1,343 @@
+{
+  "name": "yt",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "21e4c69b-42d3-48e1-8fc8-4f5024b997dd",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        -540
+      ],
+      "id": "acbbaa7b-9f91-4d8e-b932-426035115aaa",
+      "name": "Webhook",
+      "webhookId": "21e4c69b-42d3-48e1-8fc8-4f5024b997dd"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9edc2519-7574-4443-a740-83d08315d2cf",
+              "name": "body",
+              "value": "={{ $json.body.videoUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -260,
+        -540
+      ],
+      "id": "8c812568-35f1-49b7-aad5-a5bfe8c2c177",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawBody = $input.all()[0]?.json?.body;\n\n// If rawBody itself is the URL, just return it directly\nreturn [\n  {\n    json: {\n      url: rawBody,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        -540
+      ],
+      "id": "cc3438e1-310e-4262-95f0-0068c6146e1e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        -540
+      ],
+      "id": "5300521e-ccc1-4525-86a1-27bcc90b0be1",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyBeuzl8PWg1wOSVKtXqmWtWdPGSoFHurd4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"give a complete summary report in detail point wise.\"\n        },\n        {\n          \"file_data\": {\n            \"file_uri\": \"{{ $json.url }}\"\n          }\n        }\n      ]\n    }\n  ]\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        -540
+      ],
+      "id": "88c21454-7b6b-4f9a-a69b-ac20ca496ad9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e88b4b3f-ed37-4dea-85d8-61f382c5bf19",
+              "name": "candidates[0].content.parts[0].text",
+              "value": "={{ $json.candidates[0].content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        640,
+        -540
+      ],
+      "id": "b0a189bd-b506-420e-8474-3a85921f6e39",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "instructions": "convert the text into readable documnet\nin proper way\ndont use /n\n\n",
+        "codeGeneratedForPrompt": "convert the text into readable documnet\nin proper way\ndont use /n\n\n",
+        "jsCode": "const items = $input.all();\nconst updatedItems = items.map((item) => {\n  const text = item?.json?.candidates[0]?.content?.parts[0]?.text;\n  const readableText = text.replace(/\\n/g, \" \");\n  item.json.readableText = readableText;\n  return item;\n});\nreturn updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.aiTransform",
+      "typeVersion": 1,
+      "position": [
+        840,
+        -540
+      ],
+      "id": "dbf8707d-7c93-4101-a8ef-a9c6d59686fc",
+      "name": "AI Transform"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bb26185b-3629-4d77-9dd9-8af1f3b9d223",
+              "name": "readableText",
+              "value": "={{ $json.readableText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1060,
+        -540
+      ],
+      "id": "ed92fa7d-ad59-4b0c-bb3f-0ec6ef975b10",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "instructions": "convert it into different paragraphs for better understanding",
+        "codeGeneratedForPrompt": "convert it into different paragraphs for better understanding",
+        "jsCode": "const items = $input.all();\nconst paragraphs = items.map((item) => {\n  const points = item?.json?.readableText.split(\"*\");\n  return points.map((point) => point.trim());\n});\nreturn { paragraphs };\n"
+      },
+      "type": "n8n-nodes-base.aiTransform",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        -540
+      ],
+      "id": "7cf57c25-6d42-4b49-b6e8-943ae33c5279",
+      "name": "AI Transform1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        260,
+        -160
+      ],
+      "id": "112154b9-70da-4079-8ff4-a32d84dea8a9",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.email }}",
+        "subject": "Video Summary",
+        "emailType": "text",
+        "message": "=heres your Video Summary\n{{ $json.paragraphs[0] }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        -160
+      ],
+      "id": "1bf8a5d9-0dae-48ab-97ba-bfdf9ecd7abe",
+      "name": "Gmail",
+      "webhookId": "d62476f1-3415-4e1a-b6c4-2c03ff6a4cff",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QYikTQaXD7j0osB1",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Transform": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "AI Transform1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Transform1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "65b11766-e684-4ff8-8ec5-0c96cf3e6add",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7baea2293544e521bc60e41fb117b20c13ed5b6eed47d1e05c03c094efeb6385"
+  },
+  "id": "76m8binykWGel1e8",
+  "tags": []
+}
