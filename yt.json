@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "21e4c69b-42d3-48e1-8fc8-4f5024b997dd",
+        "path": "",
         "options": {}
       },
       "type": "n8n-nodes-base.webhook",
